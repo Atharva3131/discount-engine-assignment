@@ -8,6 +8,15 @@ The Opptra Discount Engine is a browser-based discount calculation tool built wi
 
 ---
 
+## Walkthrough
+
+| Format | Link |
+|---|---|
+| Loom | https://www.loom.com/share/559db91ef9c34de3a961e13025195dc9 |
+| Google Drive | https://drive.google.com/file/d/1b-D1O4-A8T7nyFhHiGgkJcp9Vl7-jAPk/view?usp=sharing |
+
+---
+
 ## Features
 
 - CSV upload for discount rules
