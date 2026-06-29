@@ -9,6 +9,8 @@ import { useState } from 'react'
 import CsvUploader from './components/CsvUploader.jsx'
 import DataTable from './components/DataTable.jsx'
 import ErrorBanner from './components/ErrorBanner.jsx'
+import RuleInput from './components/RuleInput.jsx'
+import RulePreview from './components/RulePreview.jsx'
 import { parseRulesCSV, parseCartCSV } from './engine/csvParser.js'
 import {
   processCart,
@@ -119,6 +121,9 @@ export default function App() {
   const [results, setResults] = useState([])
   const [cartSummary, setCartSummary] = useState(null)
 
+  const [pendingRule, setPendingRule] = useState(null)
+  const [ruleAdded, setRuleAdded] = useState(false)
+
   // ── Handlers ──
 
   function handleRulesLoad(csvText, fileName) {
@@ -144,6 +149,24 @@ export default function App() {
     const summary = calculateCartSummary(itemResults, rules)
     setResults(itemResults)
     setCartSummary(summary)
+  }
+
+  function handleRuleConfirm() {
+    const newRule = { ...pendingRule, ruleId: `NL-${Date.now()}` }
+    const updatedRules = [...rules, newRule]
+    setRules(updatedRules)
+    setPendingRule(null)
+    setRuleAdded(true)
+    setTimeout(() => setRuleAdded(false), 2000)
+    if (cartItems.length > 0) {
+      const itemResults = processCart(cartItems, updatedRules)
+      setResults(itemResults)
+      setCartSummary(calculateCartSummary(itemResults, updatedRules))
+    }
+  }
+
+  function handleRuleCancel() {
+    setPendingRule(null)
   }
 
   const canCalculate = rules.length > 0 && cartItems.length > 0
@@ -203,6 +226,24 @@ export default function App() {
               </div>
             )}
           </div>
+        </div>
+
+        {/* Natural language rule input */}
+        <div style={S.section}>
+          <div style={S.sectionTitle}>Add Rule via Natural Language</div>
+          <RuleInput onParsed={setPendingRule} />
+          {pendingRule && (
+            <RulePreview
+              rule={pendingRule}
+              onConfirm={handleRuleConfirm}
+              onCancel={handleRuleCancel}
+            />
+          )}
+          {ruleAdded && (
+            <div style={{ marginTop: '0.6rem', fontSize: 13, fontWeight: 700, color: '#1e5c2c' }}>
+              ✓ Rule added successfully
+            </div>
+          )}
         </div>
 
         {/* Calculate button */}
