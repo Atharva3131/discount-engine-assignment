@@ -2,7 +2,9 @@
 
 ## Overview
 
-The Opptra Discount Engine is a browser-based discount calculation tool built with React and Vite. It allows users to upload discount rules and cart items as CSV files, apply item-level and cart-level discounts, and view a detailed cost breakdown. Users can also add rules through natural language input (powered by the OpenAI API) or by uploading a PDF containing rule definitions. All processing happens entirely in the browser with no backend required.
+The Opptra Discount Engine is a browser-based discount calculation tool built with React and Vite. It allows users to upload discount rules and cart items as CSV files, apply item-level and cart-level discounts, and view a detailed cost breakdown. Users can also add rules through natural language input (powered by the OpenAI API) or upload a PDF order receipt to replace the current cart. All processing happens entirely in the browser with no backend required.
+
+**Live Demo:** https://discount-engine-assignment-iota.vercel.app/
 
 ---
 
@@ -71,6 +73,10 @@ discount-engine-assignment/
 ---
 
 ## Installation
+
+> **Live deployment:** https://discount-engine-assignment-iota.vercel.app/
+
+To run locally:
 
 ```bash
 git clone https://github.com/your-org/discount-engine-assignment.git
