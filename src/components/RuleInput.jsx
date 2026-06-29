@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { parseRule } from '../services/gemini.js'
+import { parseRule } from '../services/openai.js'
 
 const S = {
   textarea: {

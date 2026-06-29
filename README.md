@@ -1,87 +1,225 @@
-# Opptra Discount Engine — Base Implementation
+# Opptra Discount Engine
 
-This is the base implementation for the Opptra FDE Intern assignment.
-Fork this repo, complete the tasks in the assignment brief, and submit your GitHub link + Loom.
+## Overview
 
-## Running locally
+The Opptra Discount Engine is a browser-based discount calculation tool built with React and Vite. It allows users to upload discount rules and cart items as CSV files, apply item-level and cart-level discounts, and view a detailed cost breakdown. Users can also add rules through natural language input (powered by the OpenAI API) or by uploading a PDF containing rule definitions. All processing happens entirely in the browser with no backend required.
+
+---
+
+## Features
+
+- CSV upload for discount rules
+- CSV upload for cart items
+- Item-level discount calculation (brand and platform scope)
+- Stackable and non-stackable rule handling with best-saving selection
+- Cart-level discounts applied after item-level discounts
+- Automatic rule validation with row-level error reporting
+- Natural language rule creation using the OpenAI API
+- PDF rule extraction using pdfjs-dist
+- Duplicate rule detection before appending new rules
+- Automatic cart recalculation when new rules are added
+- Error handling for invalid files, ambiguous inputs, and API failures
+- Clean, responsive UI consistent with the Opptra design language
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| UI Framework | React 18 |
+| Build Tool | Vite 5 |
+| Language | JavaScript (ES Modules) |
+| CSV Parsing | PapaParse |
+| PDF Extraction | pdfjs-dist |
+| AI Rule Parsing | OpenAI API (gpt-4o-mini) |
+
+---
+
+## Project Structure
+
+```
+discount-engine-assignment/
+├── public/
+├── sample-data/
+│   ├── cart.csv               # Sample cart input
+│   └── rules.csv              # Sample discount rules
+├── src/
+│   ├── components/
+│   │   ├── CsvUploader.jsx    # Reusable CSV file upload component
+│   │   ├── DataTable.jsx      # Generic table renderer
+│   │   ├── ErrorBanner.jsx    # Validation error display
+│   │   ├── PdfRulePreview.jsx # Preview table for PDF-parsed rules
+│   │   ├── PdfRuleUploader.jsx# PDF file upload and extraction trigger
+│   │   ├── RuleInput.jsx      # Natural language input and parse trigger
+│   │   └── RulePreview.jsx    # Preview card for NL-parsed rule
+│   ├── engine/
+│   │   ├── csvParser.js       # CSV parsing and validation logic
+│   │   └── discountEngine.js  # Core discount calculation logic
+│   ├── services/
+│   │   ├── openai.js          # OpenAI API integration for NL rule parsing
+│   │   └── pdfParser.js       # PDF text extraction and rule parsing
+│   ├── App.jsx                # Root component, state management
+│   ├── main.jsx               # React entry point
+│   └── index.css              # Global styles
+├── .env                       # Environment variables (not committed)
+├── index.html
+├── package.json
+└── vite.config.js
+```
+
+---
+
+## Installation
 
 ```bash
+git clone https://github.com/your-org/discount-engine-assignment.git
+cd discount-engine-assignment
 npm install
 npm run dev
 ```
 
-Open http://localhost:5173
+The application will be available at `http://localhost:5173`.
 
-## Deploying
+---
 
-```bash
-npm run build
-```
+## Environment Variables
 
-Deploy the `dist/` folder to Vercel, Netlify, or any static host.
-The live deployment URL must be in your README before submission.
-
-## How to use
-
-1. Upload `sample-data/rules.csv` as the discount rules input
-2. Upload `sample-data/cart.csv` as the cart input
-3. Click **Calculate Discounts**
-
-## Project structure
+Create a `.env` file in the project root before running the application:
 
 ```
-src/
-  engine/
-    discountEngine.js   ← pure discount logic (no UI)
-    csvParser.js        ← CSV → typed objects
-  components/
-    CsvUploader.jsx     ← file upload area
-    DataTable.jsx       ← reusable table
-    ErrorBanner.jsx     ← parse error display
-  App.jsx               ← main UI + state
-  main.jsx              ← entry point
-
-sample-data/
-  rules.csv             ← sample discount rules
-  cart.csv              ← sample cart items
+VITE_OPENAI_API_KEY=your_openai_api_key_here
 ```
 
-## CSV formats
+The OpenAI API key is required only for the natural language rule input feature. CSV upload and PDF upload work without it.
 
-**rules.csv**
+---
 
-| Column     | Type              | Example          |
-|------------|-------------------|------------------|
-| rule_id    | string            | RULE-01          |
-| scope      | brand \| platform | platform         |
-| applies_to | string            | Amazon India     |
-| type       | percentage \| flat| percentage       |
-| value      | number            | 15               |
-| stackable  | true \| false     | false            |
+## Usage
 
-**cart.csv**
+### CSV Workflow
 
-| Column     | Type   | Example      |
-|------------|--------|--------------|
-| item_id    | string | ITEM-01      |
-| product    | string | Cushion Cover|
-| brand      | string | Natura Casa  |
-| platform   | string | Amazon India |
-| base_price | number | 1299         |
+1. Upload `rules.csv` using the **Discount Rules** upload panel.
+2. Upload `cart.csv` using the **Cart Items** upload panel.
+3. Click **Calculate Discounts** to run the engine.
+4. The **Cart Summary** section displays item-level results, subtotal, cart offer (if applicable), and final total.
 
-## Discount logic
+### Natural Language Rule
 
-- When multiple non-stackable rules match an item, the one giving the **largest saving in rupees** is applied.
-- Rules marked `stackable: true` apply **on top of** the winning non-stackable rule.
-- If no rules match, the base price is returned with a "No offers available" note.
+1. In the **Add Rule via Natural Language** section, type a rule description in plain English.
+2. Click **Parse Rule**. The OpenAI API parses the input and returns a structured preview.
+3. Review the preview and click **Confirm** to append the rule and recalculate, or **Cancel** to discard.
 
-## Expected results for the sample data
+### PDF Rule Upload
 
-| Item    | Base Price | Final Price | Reasoning                              |
-|---------|-----------|-------------|----------------------------------------|
-| ITEM-01 | Rs.1,299  | Rs.1,104    | Platform offer: 15% off (beats Rs.150) |
-| ITEM-02 | Rs.849    | Rs.629      | Brand offer: Rs.150 off + Platform 10% |
-| ITEM-03 | Rs.599    | Rs.509      | Platform offer: 15% off                |
-| ITEM-04 | Rs.2,499  | Rs.2,499    | No offers available                    |
-| ITEM-05 | Rs.449    | Rs.382      | Platform offer: 15% off                |
-| ITEM-06 | Rs.899    | Rs.809      | Platform offer: 10% off                |
+1. In the **Add Rules via PDF** section, click to upload a PDF file.
+2. The parser extracts and validates all recognisable discount rules.
+3. A preview table shows all valid rules. Duplicates and unparseable lines are reported separately.
+4. Click **Confirm All** to append the rules and recalculate, or **Cancel** to discard.
+
+---
+
+## Sample Inputs
+
+### rules.csv
+
+```csv
+rule_id,scope,applies_to,type,value,stackable,min_cart_value
+RULE-01,platform,Amazon India,percentage,15,false,
+RULE-02,brand,Natura Casa,flat,150,false,
+RULE-03,platform,Flipkart,percentage,10,true,
+RULE-04,cart,,percentage,10,false,4000
+```
+
+### cart.csv
+
+```csv
+item_id,product,brand,platform,base_price
+ITEM-01,Cushion Cover,Natura Casa,Amazon India,1299
+ITEM-02,Bed Sheet Set,Natura Casa,Flipkart,849
+ITEM-03,Wall Shelf,Nordic Basics,Amazon India,599
+```
+
+---
+
+## Natural Language Rule Examples
+
+```
+20% off Natura Casa
+15% off Amazon India
+Flat Rs.100 off Flipkart
+10% off cart above Rs.4000
+5% stackable discount for Myntra
+Rs.200 flat discount on all Meesho items, stackable
+```
+
+---
+
+## PDF Rule Support
+
+The PDF parser supports rules written in labeled or inline formats.
+
+**Labeled format:**
+```
+Platform: Amazon India
+Discount: 15% off
+
+Brand: Natura Casa
+Discount: Flat Rs.150 off
+Stackable: Yes
+
+Cart Discount
+10% off
+Minimum Cart Value: Rs.4000
+```
+
+**Inline format:**
+```
+Amazon India 15% off
+Natura Casa Flat Rs.150 off stackable
+Flipkart 10% off
+```
+
+Duplicate rules (matched by scope, appliesTo, type, value, stackable, and minCartValue) are automatically skipped. Lines that cannot be parsed are reported with a count but do not block valid rules from being added.
+
+---
+
+## Assumptions
+
+- Percentage discounts are applied to the current running price, not the original base price, which matters when stackable rules are chained.
+- When multiple non-stackable rules match an item, the one producing the highest rupee saving is selected; the rest are skipped.
+- Stackable rules are applied sequentially after the winning non-stackable rule.
+- Cart-level discounts are applied to the subtotal (sum of all item final prices) after all item-level discounts have been applied.
+- When multiple cart rules are eligible, the one producing the highest absolute saving is selected.
+- Rules added via natural language or PDF are assigned generated IDs (`NL-<timestamp>` and `PDF-<timestamp>-<index>`) and behave identically to CSV-loaded rules.
+- Duplicate detection is case-insensitive and whitespace-normalised.
+
+---
+
+## Future Improvements
+
+- Drag-and-drop file upload for CSV and PDF inputs
+- OCR support for scanned or image-based PDFs
+- User authentication and per-user rule sets
+- Database persistence for rules and cart history
+- Audit history showing which rules were applied per session
+- Export discounted cart as CSV or PDF
+- Rule priority and conflict resolution UI
+- Support for date-range and quantity-based discount conditions
+
+---
+
+## Screenshots
+
+| Screen | Path |
+|---|---|
+| Home / Upload | `docs/home.png` |
+| Natural Language Input | `docs/natural-language.png` |
+| PDF Upload Preview | `docs/pdf-upload.png` |
+| Cart Summary | `docs/cart-summary.png` |
+
+---
+
+## Author
+
+**Atharva K A**
