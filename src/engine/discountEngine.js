@@ -161,9 +161,13 @@ export function applyDiscounts(item, rules) {
 /**
  * Runs applyDiscounts across every item in the cart.
  * Returns an array of DiscountResult objects.
+ * Cart-level discount is handled separately by calculateCartSummary().
  */
 export function processCart(cartItems, rules) {
-  return cartItems.map((item) => applyDiscounts(item, rules))
+  // Only item-level rules (brand / platform) are applied here
+  const itemRules = rules.filter(rule => rule.scope !== "cart")
+
+  return cartItems.map(item => applyDiscounts(item, itemRules))
 }
 
 /**
@@ -171,4 +175,43 @@ export function processCart(cartItems, rules) {
  */
 export function cartTotal(results) {
   return results.reduce((sum, r) => sum + r.finalPrice, 0)
+}
+
+/**
+ * Calculates cart-level discounts after all item discounts
+ * have already been applied.
+ */
+export function calculateCartSummary(results, rules) {
+
+  const subtotal = cartTotal(results)
+
+  const applicableRules = rules.filter(rule =>
+    rule.scope === "cart" &&
+    subtotal >= rule.minCartValue
+  )
+
+  if (applicableRules.length === 0) {
+    return {
+      subtotal,
+      cartDiscount: 0,
+      finalTotal: subtotal,
+      appliedRule: null
+    }
+  }
+
+  // Choose the rule with the highest percentage
+  const bestRule = applicableRules.reduce((best, current) =>
+    Math.round(subtotal * current.value / 100) > Math.round(subtotal * best.value / 100) ? current : best
+  )
+
+  const cartDiscount = Math.round(
+    subtotal * bestRule.value / 100
+  )
+
+  return {
+    subtotal,
+    cartDiscount,
+    finalTotal: subtotal - cartDiscount,
+    appliedRule: bestRule
+  }
 }

@@ -10,7 +10,10 @@ import CsvUploader from './components/CsvUploader.jsx'
 import DataTable from './components/DataTable.jsx'
 import ErrorBanner from './components/ErrorBanner.jsx'
 import { parseRulesCSV, parseCartCSV } from './engine/csvParser.js'
-import { processCart, cartTotal } from './engine/discountEngine.js'
+import {
+  processCart,
+  calculateCartSummary
+} from './engine/discountEngine.js'
 
 // ── Column definitions ───────────────────────────────────────────
 
@@ -113,7 +116,8 @@ export default function App() {
   const [cartErrors, setCartErrors] = useState([])
   const [cartFileName, setCartFileName]   = useState('')
 
-  const [results, setResults]       = useState(null)
+  const [results, setResults] = useState([])
+  const [cartSummary, setCartSummary] = useState(null)
 
   // ── Handlers ──
 
@@ -122,7 +126,8 @@ export default function App() {
     setRules(data)
     setRulesErr(errors)
     setRulesFileName(fileName)
-    setResults(null) // clear stale results
+    setResults([])
+    setCartSummary(null)
   }
 
   function handleCartLoad(csvText, fileName) {
@@ -130,12 +135,15 @@ export default function App() {
     setCartItems(data)
     setCartErrors(errors)
     setCartFileName(fileName)
-    setResults(null)
+    setResults([])
+    setCartSummary(null)
   }
 
   function handleCalculate() {
-    const res = processCart(cartItems, rules)
-    setResults(res)
+    const itemResults = processCart(cartItems, rules)
+    const summary = calculateCartSummary(itemResults, rules)
+    setResults(itemResults)
+    setCartSummary(summary)
   }
 
   const canCalculate = rules.length > 0 && cartItems.length > 0
@@ -214,13 +222,49 @@ export default function App() {
         </div>
 
         {/* Results */}
-        {results && (
+        {results.length > 0 && cartSummary && (
           <div style={S.section}>
             <div style={S.sectionTitle}>Cart Summary</div>
-            <DataTable columns={RESULTS_COLUMNS} rows={results} />
+
+            <DataTable
+              columns={RESULTS_COLUMNS}
+              rows={results}
+            />
+
             <div style={S.totalRow}>
-              <span style={S.totalLabel}>Cart Total</span>
-              <span style={S.totalValue}>Rs.{cartTotal(results).toLocaleString('en-IN')}</span>
+              <span style={S.totalLabel}>Subtotal</span>
+              <span style={S.totalValue}>
+                Rs.{cartSummary.subtotal.toLocaleString('en-IN')}
+              </span>
+            </div>
+
+            {cartSummary.appliedRule && (
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginTop: '10px',
+                  padding: '0.5rem 0',
+                  color: '#1e5c2c',
+                  fontWeight: 700,
+                }}
+              >
+                <span>
+                  Cart Offer ({cartSummary.appliedRule.ruleId}): {cartSummary.appliedRule.value}% off on orders above ₹{cartSummary.appliedRule.minCartValue.toLocaleString('en-IN')} &nbsp;·&nbsp; Saved ₹{cartSummary.cartDiscount.toLocaleString('en-IN')}
+                </span>
+
+                <span>
+                  − Rs.{cartSummary.cartDiscount.toLocaleString('en-IN')}
+                </span>
+              </div>
+            )}
+
+            <div style={S.totalRow}>
+              <span style={S.totalLabel}>Final Total</span>
+              <span style={S.totalValue}>
+                Rs.{cartSummary.finalTotal.toLocaleString('en-IN')}
+              </span>
             </div>
           </div>
         )}
