@@ -15,7 +15,7 @@ The Opptra Discount Engine is a browser-based discount calculation tool built wi
 - Cart-level discounts applied after item-level discounts
 - Automatic rule validation with row-level error reporting
 - Natural language rule creation using the OpenAI API
-- PDF rule extraction using pdfjs-dist
+- PDF cart upload — extract cart items from an order receipt PDF and replace the current cart
 - Duplicate rule detection before appending new rules
 - Automatic cart recalculation when new rules are added
 - Error handling for invalid files, ambiguous inputs, and API failures
@@ -110,12 +110,13 @@ The OpenAI API key is required only for the natural language rule input feature.
 2. Click **Parse Rule**. The OpenAI API parses the input and returns a structured preview.
 3. Review the preview and click **Confirm** to append the rule and recalculate, or **Cancel** to discard.
 
-### PDF Rule Upload
+### PDF Cart Upload
 
-1. In the **Add Rules via PDF** section, click to upload a PDF file.
-2. The parser extracts and validates all recognisable discount rules.
-3. A preview table shows all valid rules. Duplicates and unparseable lines are reported separately.
-4. Click **Confirm All** to append the rules and recalculate, or **Cancel** to discard.
+1. In the **Cart Items** panel, click **Upload cart.pdf**.
+2. Upload a PDF order receipt with columns: Product, Brand, Platform, Base Price.
+3. The parser extracts all cart items and replaces the current cart automatically.
+4. If rules are already loaded, the engine recalculates immediately.
+5. Any rows that could not be parsed are reported separately.
 
 ---
 
@@ -155,32 +156,25 @@ Rs.200 flat discount on all Meesho items, stackable
 
 ---
 
-## PDF Rule Support
+## PDF Cart Support
 
-The PDF parser supports rules written in labeled or inline formats.
+The PDF cart uploader extracts cart items from an order receipt PDF. The expected structure is a table with columns: **Product, Brand, Platform, Base Price**.
 
-**Labeled format:**
+**Example PDF format:**
 ```
-Platform: Amazon India
-Discount: 15% off
+Order #OP-9921 | Date: 15 Jan 2025
 
-Brand: Natura Casa
-Discount: Flat Rs.150 off
-Stackable: Yes
-
-Cart Discount
-10% off
-Minimum Cart Value: Rs.4000
-```
-
-**Inline format:**
-```
-Amazon India 15% off
-Natura Casa Flat Rs.150 off stackable
-Flipkart 10% off
+Product          Brand           Platform       Base Price
+────────────────────────────────────────────────────────
+Cushion Cover    Natura Casa     Amazon India   Rs.1,299
+Bed Sheet Set    Natura Casa     Flipkart       Rs.849
+Wall Shelf       LivSpace Pro    Amazon India   Rs.599
+Ceramic Vase     LivSpace Pro    Noon           Rs.2,499
+Cutting Board    Nordic Basics   Amazon India   Rs.449
+Desk Organiser   Nordic Basics   Flipkart       Rs.899
 ```
 
-Duplicate rules (matched by scope, appliesTo, type, value, stackable, and minCartValue) are automatically skipped. Lines that cannot be parsed are reported with a count but do not block valid rules from being added.
+Uploading a valid cart PDF replaces the current cart immediately. If rules are already loaded, the discount engine recalculates automatically. Rows that cannot be parsed are reported but do not block valid items from loading.
 
 ---
 
@@ -211,12 +205,17 @@ Duplicate rules (matched by scope, appliesTo, type, value, stackable, and minCar
 
 ## Screenshots
 
-| Screen | Path |
-|---|---|
-| Home / Upload | `docs/home.png` |
-| Natural Language Input | `docs/natural-language.png` |
-| PDF Upload Preview | `docs/pdf-upload.png` |
-| Cart Summary | `docs/cart-summary.png` |
+### Cart Summary
+![Cart Summary](docs/Cart_summary.png)
+
+### Natural Language Rule Parsing
+![Natural Language Parsing](docs/NaturalLanguageParsing.png)
+
+### PDF Cart Upload
+![PDF Cart Upload](docs/PDFcart_upload_feature.png)
+
+### Error Handling
+![Error Handling](docs/ErrorHangling.png)
 
 ---
 

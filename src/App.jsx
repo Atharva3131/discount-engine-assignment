@@ -11,8 +11,7 @@ import DataTable from './components/DataTable.jsx'
 import ErrorBanner from './components/ErrorBanner.jsx'
 import RuleInput from './components/RuleInput.jsx'
 import RulePreview from './components/RulePreview.jsx'
-import PdfRuleUploader from './components/PdfRuleUploader.jsx'
-import PdfRulePreview from './components/PdfRulePreview.jsx'
+import PdfCartUploader from './components/PdfCartUploader.jsx'
 import { parseRulesCSV, parseCartCSV } from './engine/csvParser.js'
 import {
   processCart,
@@ -126,9 +125,6 @@ export default function App() {
   const [pendingRule, setPendingRule] = useState(null)
   const [ruleAdded, setRuleAdded] = useState(false)
 
-  const [pendingPdfResult, setPendingPdfResult] = useState(null)
-  const [pdfRulesAdded, setPdfRulesAdded] = useState(false)
-
   // ── Handlers ──
 
   function handleRulesLoad(csvText, fileName) {
@@ -174,25 +170,17 @@ export default function App() {
     setPendingRule(null)
   }
 
-  function handlePdfConfirm() {
-    const newRules = pendingPdfResult.rules.map((r, i) => ({
-      ...r,
-      ruleId: `PDF-${Date.now()}-${i}`,
-    }))
-    const updatedRules = [...rules, ...newRules]
-    setRules(updatedRules)
-    setPendingPdfResult(null)
-    setPdfRulesAdded(true)
-    setTimeout(() => setPdfRulesAdded(false), 2000)
-    if (cartItems.length > 0) {
-      const itemResults = processCart(cartItems, updatedRules)
+  function handlePdfCartLoad(result) {
+    setCartItems(result.items)
+    setCartErrors(result.parseErrors ?? [])
+    setCartFileName('cart.pdf')
+    setResults([])
+    setCartSummary(null)
+    if (rules.length > 0) {
+      const itemResults = processCart(result.items, rules)
       setResults(itemResults)
-      setCartSummary(calculateCartSummary(itemResults, updatedRules))
+      setCartSummary(calculateCartSummary(itemResults, rules))
     }
-  }
-
-  function handlePdfCancel() {
-    setPendingPdfResult(null)
   }
 
   const canCalculate = rules.length > 0 && cartItems.length > 0
@@ -242,6 +230,7 @@ export default function App() {
               hasData={cartItems.length > 0}
               fileName={cartFileName}
             />
+            <PdfCartUploader onCartLoaded={handlePdfCartLoad} />
             <ErrorBanner errors={cartErrors} />
             {cartItems.length > 0 && (
               <div style={{ marginTop: '0.75rem' }}>
@@ -268,24 +257,6 @@ export default function App() {
           {ruleAdded && (
             <div style={{ marginTop: '0.6rem', fontSize: 13, fontWeight: 700, color: '#1e5c2c' }}>
               ✓ Rule added successfully
-            </div>
-          )}
-        </div>
-
-        {/* PDF rule upload */}
-        <div style={S.section}>
-          <div style={S.sectionTitle}>Add Rules via PDF</div>
-          <PdfRuleUploader onParsed={setPendingPdfResult} existingRules={rules} />
-          {pendingPdfResult && (
-            <PdfRulePreview
-              result={pendingPdfResult}
-              onConfirm={handlePdfConfirm}
-              onCancel={handlePdfCancel}
-            />
-          )}
-          {pdfRulesAdded && (
-            <div style={{ marginTop: '0.6rem', fontSize: 13, fontWeight: 700, color: '#1e5c2c' }}>
-              ✓ Rules added successfully
             </div>
           )}
         </div>
